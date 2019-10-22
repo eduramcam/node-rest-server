@@ -2,12 +2,17 @@ const express = require('express');
 const app = express();
 
 const Usuario = require('../models/usuario');
+const { verificarToken } = require('../middlewares/autenticacion');
+const { verificaAdmin_Role } = require('../middlewares/autenticacion');
+
 const bcrypt = require('bcrypt');
 const _ = require('underscore');
 
 // respond with "hello world" when a GET request is made to the homepage
-app.get('/usuario', function(req, res) {
-
+app.get('/usuario', verificarToken, (req, res) => {
+    // return res.json({
+    //     usuario: req.usuario
+    // });
     let desde = req.query.desde || 0;
     let limite = req.query.limite || 5;
 
@@ -41,7 +46,7 @@ app.get('/usuario', function(req, res) {
 
 
 });
-app.post('/usuario', function(req, res) {
+app.post('/usuario', [verificarToken, verificaAdmin_Role], function(req, res) {
     let body = req.body;
 
     let usuario = new Usuario({
@@ -70,8 +75,9 @@ app.post('/usuario', function(req, res) {
 });
 
 // metodos http 
-app.put('/usuario/:id', function(req, res) {
+app.put('/usuario/:id', [verificarToken, verificaAdmin_Role], function(req, res) {
     let id = req.params.id;
+
     let body = _.pick(req.body, ['nombre', 'email', 'role', 'estado', 'img']);
 
     Usuario.findByIdAndUpdate(id, body, { new: true, runValidators: true }, (err, usuarioDB) => {
@@ -88,7 +94,7 @@ app.put('/usuario/:id', function(req, res) {
 
 });
 
-app.delete('/usuario/:id', function(req, res) {
+app.delete('/usuario/:id', [verificarToken, verificaAdmin_Role], function(req, res) {
     let id = req.params.id;
 
     let cambiaEstado = {
